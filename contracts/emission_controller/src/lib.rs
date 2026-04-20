@@ -262,7 +262,7 @@ mod test {
         let env = Env::default();
         env.mock_all_auths();
         let admin = Address::generate(&env);
-        let cid = env.register_contract(None, EmissionController);
+        let cid = env.register(EmissionController, ());
         let c = EmissionControllerClient::new(&env, &cid);
 
         c.init(&admin, &7_500, &500, &50, &100, &0, &1_000_000);
@@ -280,23 +280,22 @@ mod test {
         let env = Env::default();
         env.mock_all_auths();
         let admin = Address::generate(&env);
-        let cid = env.register_contract(None, EmissionController);
+        let cid = env.register(EmissionController, ());
         let c = EmissionControllerClient::new(&env, &cid);
 
         // Target 70% utilization, moderate gains, emission bounds [0, 1_000_000]
         c.init(&admin, &7_000, &400, &30, &80, &0, &1_000_000);
 
         // Start far below target utilization and see emissions rise then stabilize
-        let mut util_series = [
+        let util_series = [
             2_000u32, 3_000, 4_000, 5_000, 6_000, 6_500, 6_800, 6_900, 7_000, 7_100, 7_000,
         ];
-        let mut last = 0i128;
         for u in util_series.iter() {
-            last = c.compute_emission(u);
+            let last = c.compute_emission(u);
             let (_i, _e, le) = c.state();
             assert_eq!(le, last);
             // should remain within bounds
-            assert!(last >= 0 && last <= 1_000_000);
+            assert!((0..=1_000_000).contains(&last));
         }
         // Small deviation around target should avoid extreme swings
         let e1 = c.compute_emission(&6_900);
@@ -310,7 +309,7 @@ mod test {
         let env = Env::default();
         env.mock_all_auths();
         let admin = Address::generate(&env);
-        let cid = env.register_contract(None, EmissionController);
+        let cid = env.register(EmissionController, ());
         let c = EmissionControllerClient::new(&env, &cid);
 
         c.init(&admin, &9_500, &1_000, &500, &500, &10, &100);
